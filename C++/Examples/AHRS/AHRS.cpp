@@ -47,7 +47,6 @@ AHRS    ahrs;   // Mahony AHRS
 float ax, ay, az;
 float gx, gy, gz;
 float mx, my, mz;
-float acc[3], gyro[3], mag[3];
 
 // Orientation data
 
@@ -112,11 +111,11 @@ void imuSetup()
 	for(int i = 0; i<100; i++)
 	{
 		imu->update();
-    imu->read_gyroscope(gyro);
+    imu->read_gyroscope(&gx, &gy, &gz);
 
-    gx = gyro[0] * 180 / PI;
-    gy = gyro[1] * 180 / PI;
-    gz = gyro[2] * 180 / PI;
+    gx *= 180 / PI;
+    gy *= 180 / PI;
+    gz *= 180 / PI;
 
 		offset[0] += (-gx*0.0175);
 		offset[1] += (-gy*0.0175);
@@ -150,15 +149,15 @@ void imuLoop()
 
     // Accel + gyro.
     imu->update();
-    imu->read_accelerometer(acc);
-    imu->read_gyroscope(gyro);
+    imu->read_accelerometer(&ax, &ay, &az);
+    imu->read_gyroscope(&gx, &gy, &gz);
 
-    ax = acc[0] / G_SI;
-    ay = acc[1] / G_SI;
-    az = acc[2] / G_SI;
-    gx = gyro[0] * 180 / PI;
-    gy = gyro[1] * 180 / PI;
-    gz = gyro[2] * 180 / PI;
+    ax /= G_SI;
+    ay /= G_SI;
+    az /= G_SI;
+    gx *= 180 / PI;
+    gy *= 180 / PI;
+    gz *= 180 / PI;
 
     ahrs.updateIMU(ax, ay, az, gx*0.0175, gy*0.0175, gz*0.0175, dt);
 
@@ -166,19 +165,16 @@ void imuLoop()
     // Soft and hard iron calibration required for proper function.
     /*
     imu->update();
-    imu->read_accelerometer(acc);
-    imu->read_gyroscope(gyro);
-    imu->read_magnetometer(mag);
+    imu->read_accelerometer(&ax, &ay, &az);
+    imu->read_gyroscope(&gx, &gy, &gz);
+    imu->read_magnetometer(&mx, &my, &mz);
 
-    ax = acc[0] / G_SI;
-    ay = acc[1] / G_SI;
-    az = acc[2] / G_SI;
-    gx = gyro[0] * 180 / PI;
-    gy = gyro[1] * 180 / PI;
-    gz = gyro[2] * 180 / PI;
-    mx = mag[0];
-    my = mag[1];
-    mz = mag[2];
+    ax /= G_SI;
+    ay /= G_SI;
+    az /= G_SI;
+    gx *= 180 / PI;
+    gy *= 180 / PI;
+    gz *= 180 / PI;
 
     ahrs.update(ax, ay, az, gx*0.0175, gy*0.0175, gz*0.0175, my, mx, -mz, dt);
     */
