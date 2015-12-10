@@ -84,17 +84,19 @@ int main(int argc, char *argv[])
     }
     sensor->initialize();
 
-    float acc[3], gyro[3], mag[3];
+    float ax, ay, az;
+    float gx, gy, gz;
+    float mx, my, mz;
 //-------------------------------------------------------------------------
 
     while(1) {
         sensor->update();
-        sensor->read_accelerometer(acc);
-        sensor->read_gyroscope(gyro);
-        sensor->read_magnetometer(mag);
-        printf("Acc: %+7.3f %+7.3f %+7.3f  ", acc[0], acc[1], acc[2]);
-        printf("Gyr: %+8.3f %+8.3f %+8.3f  ", gyro[0], gyro[1], gyro[2]);
-        printf("Mag: %+7.3f %+7.3f %+7.3f\n", mag[0], mag[1], mag[2]);
+        sensor->read_accelerometer(&ax, &ay, &az);
+        sensor->read_gyroscope(&gx, &gy, &gz);
+        sensor->read_magnetometer(&mx, &my, &mz);
+        printf("Acc: %+7.3f %+7.3f %+7.3f  ", ax, ay, az);
+        printf("Gyr: %+8.3f %+8.3f %+8.3f  ", gx, gy, gz);
+        printf("Mag: %+7.3f %+7.3f %+7.3f\n", mx, my, mz);
 
        usleep(500000);
     }
