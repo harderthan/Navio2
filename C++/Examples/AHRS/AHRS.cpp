@@ -4,17 +4,18 @@ Copyright (c) 2014, Emlid Limited. All rights reserved.
 Written by Igor Vereninov and Mikhail Avkhimenia
 twitter.com/emlidtech || www.emlid.com || info@emlid.com
 
-Application: Mahory AHRS algorithm supplied with data from MPU9250.
+Application: Mahory AHRS algorithm supplied with data from MPU9250 and LSM9DS1.
 Outputs roll, pitch and yaw in the console and sends quaternion
 over the network - it can be used with 3D IMU visualizer located in
 Navio/Applications/3D IMU visualizer.
 
 To run this app navigate to the directory containing it and run following commands:
 make
-sudo ./AHRS
-
+sudo ./AHRS -i [sensor name] ipaddress portnumber
+Sensors names: mpu is MPU9250, lsm is LSM9DS1.
 If you want to visualize IMU data on another machine pass it's address and port
-sudo ./AHRS ipaddress portnumber
+For print help:
+./AHRS -h
 
 To achieve stable loop you need to run this application with a high priority
 on a linux kernel with real-time patch. Raspbian distribution with real-time
@@ -38,7 +39,7 @@ chrt -f -p 99 PID
 
 // Objects
 
-InertialSensor *imu;    // MPU9250
+InertialSensor *imu;
 AHRS    ahrs;   // Mahony AHRS
 
 // Sensor data
@@ -85,6 +86,16 @@ InertialSensor* create_inertial_sensor(char *sensor_name)
     }
 
     return imu;
+}
+
+void print_help()
+{
+    printf("Possible parameters:\nSensor selection: -i [sensor name]\n");
+    printf("Sensors names: mpu is MPU9250, lsm is LSM9DS1\nFor help: -h\n");
+    printf("If you want to visualize IMU data on another machine,\n");
+    printf("add IP address and port number (by default 7000):\n");
+    printf("-i [sensor name] ipaddress portnumber\n");
+
 }
 
 //============================= Initial setup =================================
@@ -196,16 +207,19 @@ int main(int argc, char *argv[])
 
     if (argc < 2) {
         printf("Enter parameter\n");
+        print_help();
         return EXIT_FAILURE;
     }
 
     // prevent the error message
     opterr=0;
 
-    while ((parameter = getopt(argc, argv, "i:")) != -1) {
+    while ((parameter = getopt(argc, argv, "i:h")) != -1) {
         switch (parameter) {
         case 'i': sensor_name = optarg; break;
-        case '?': printf("Wrong parameter. Possible parameters: -i [sensor name]\n");
+        case 'h': print_help(); return EXIT_FAILURE;
+        case '?': printf("Wrong parameter.\n");
+                  print_help();
                   return EXIT_FAILURE;
         }
     }
