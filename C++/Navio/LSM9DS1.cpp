@@ -136,7 +136,7 @@ void LSM9DS1::update()
     ReadRegs(DEV_MAG, LSM9DS1M_OUT_X_L_M, &response[0], 6);
     for (int i=0; i<3; i++) {
         bit_data = ((int16_t)response[2*i+1] << 8) | response[2*i] ;
-        magnetometer_data[i] = 1000.0 * ((float)bit_data * mag_scale + magBias[i]);
+        magnetometer_data[i] = 100.0 * ((float)bit_data * mag_scale + magBias[i]);
     }
 
 
