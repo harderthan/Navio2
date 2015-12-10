@@ -4,8 +4,8 @@
 
 #include "LSM9DS1.h"
 
-#define DEVICE_ACC_GYRO "/dev/spidev0.3"
-#define DEVICE_MAGNETOMETER      "/dev/spidev0.2"
+#define DEVICE_ACC_GYRO     "/dev/spidev0.3"
+#define DEVICE_MAGNETOMETER "/dev/spidev0.2"
 
 #define READ_FLAG     0x80
 #define MULTIPLE_READ 0x40
@@ -24,7 +24,6 @@ usage: use these methods to read and write LSM9DS1 registers over SPI
 
 unsigned int LSM9DS1::WriteReg(const char *dev, uint8_t WriteAddr, uint8_t WriteData )
 {
-    unsigned int temp_val;
     unsigned char tx[2] = {WriteAddr, WriteData};
     unsigned char rx[2] = {0};
     SPIdev::transfer(dev, tx, rx, 2);
@@ -42,11 +41,11 @@ void LSM9DS1::ReadRegs(const char *dev, uint8_t ReadAddr, uint8_t *ReadBuf, unsi
     unsigned char rx[255] = {0};
 
     tx[0] = ReadAddr | READ_FLAG;
-    if (dev == DEVICE_MAGNETOMETER) tx[0] |= MULTIPLE_READ;
+    if (!strcmp(dev, DEVICE_MAGNETOMETER)) tx[0] |= MULTIPLE_READ;
 
     SPIdev::transfer(dev, tx, rx, Bytes + 1);
 
-    for (int i = 0; i < Bytes; i++)
+    for (uint i = 0; i < Bytes; i++)
         ReadBuf[i] = rx[i + 1];
 
     usleep(50);
