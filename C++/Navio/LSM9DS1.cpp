@@ -110,10 +110,7 @@ bool LSM9DS1::initialize()
 void LSM9DS1::update()
 {
     uint8_t response[6];
-    int16_t bit_data;
-    float accelBias[3]={0,0,0};
-    float gyroBias[3]={0,0,0};
-    float magBias[3]={0,0,0};
+    int16_t bit_data[3];
 
     // Read temperature
     ReadRegs(DEVICE_ACC_GYRO, LSM9DS1XG_OUT_TEMP_L, &response[0], 2);
@@ -122,23 +119,29 @@ void LSM9DS1::update()
     // Read accelerometer
     ReadRegs(DEVICE_ACC_GYRO, LSM9DS1XG_OUT_X_L_XL, &response[0], 6);
     for (int i=0; i<3; i++) {
-        bit_data = ((int16_t)response[2*i+1] << 8) | response[2*i] ;
-        accelerometer_data[i] = G_SI * ((float)bit_data * acc_scale + accelBias[i]);
+        bit_data[i] = ((int16_t)response[2*i+1] << 8) | response[2*i] ;
     }
+    _ax = G_SI * ((float)bit_data[0] * acc_scale);
+    _ay = G_SI * ((float)bit_data[1] * acc_scale);
+    _az = G_SI * ((float)bit_data[2] * acc_scale);
 
     // Read gyroscope
     ReadRegs(DEVICE_ACC_GYRO, LSM9DS1XG_OUT_X_L_G, &response[0], 6);
     for (int i=0; i<3; i++) {
-        bit_data = ((int16_t)response[2*i+1] << 8) | response[2*i] ;
-        gyroscope_data[i] = (PI/180) * ((float)bit_data * gyro_scale + gyroBias[i]);
+        bit_data[i] = ((int16_t)response[2*i+1] << 8) | response[2*i] ;
     }
+    _gx = (PI / 180) * ((float)bit_data[0] * gyro_scale);
+    _gy = (PI / 180) * ((float)bit_data[1] * gyro_scale);
+    _gz = (PI / 180) * ((float)bit_data[2] * gyro_scale);
 
     // Read magnetometer
     ReadRegs(DEVICE_MAGNETOMETER, LSM9DS1M_OUT_X_L_M, &response[0], 6);
     for (int i=0; i<3; i++) {
-        bit_data = ((int16_t)response[2*i+1] << 8) | response[2*i] ;
-        magnetometer_data[i] = 100.0 * ((float)bit_data * mag_scale + magBias[i]);
+        bit_data[i] = ((int16_t)response[2*i+1] << 8) | response[2*i] ;
     }
+    _mx = 100.0 * ((float)bit_data[0] * mag_scale);
+    _my = 100.0 * ((float)bit_data[1] * mag_scale);
+    _mz = 100.0 * ((float)bit_data[2] * mag_scale);
 
     // Change rotation of LSM9DS1 like in MPU-9250
     rotate();
@@ -148,16 +151,16 @@ void LSM9DS1::rotate()
 {
     float replacement_acc, replacement_gyro;
 
-    replacement_acc = accelerometer_data[0];
-    accelerometer_data[0] = -accelerometer_data[1];
-    accelerometer_data[1] = -replacement_acc;
+    replacement_acc = _ax;
+    _ax = -_ay;
+    _ay = -replacement_acc;
 
-    replacement_gyro = gyroscope_data[0];
-    gyroscope_data[0] = -gyroscope_data[1];
-    gyroscope_data[1] = -replacement_gyro;
+    replacement_gyro = _gx;
+    _gx = -_gy;
+    _gy = -replacement_gyro;
 
-    magnetometer_data[1] = -magnetometer_data[1];
-    magnetometer_data[2] = -magnetometer_data[2];
+    _my = -_my;
+    _mz = -_mz;
 }
 
 void LSM9DS1::set_gyro_scale(int scale)
