@@ -8,15 +8,15 @@ public:
     virtual void update() = 0;
 
     float read_temperature() {return temperature;};
-    void read_accelerometer(float *acc_values) {memcpy(acc_values, accelerometer_data, sizeof(accelerometer_data));};
-    void read_gyroscope(float *gyro_values) {memcpy(gyro_values, gyroscope_data, sizeof(gyroscope_data));};
-    void read_magnetometer(float *mag_values) {memcpy(mag_values, magnetometer_data, sizeof(magnetometer_data));};
+    void read_accelerometer(float *ax, float *ay, float *az) {*ax = _ax; *ay = _ay; *az = _az;};
+    void read_gyroscope(float *gx, float *gy, float *gz) {*gx = _gx; *gy = _gy; *gz = _gz;};
+    void read_magnetometer(float *mx, float *my, float *mz) {*mx = _mx; *my = _my; *mz = _mz;};
 
 protected:
     float temperature;
-    float accelerometer_data[3];
-    float gyroscope_data[3];
-    float magnetometer_data[3];
+    float _ax, _ay, _az;
+    float _gx, _gy, _gz;
+    float _mx, _my, _mz;
 };
 
 #endif //_INERTIAL_SENSOR_H
