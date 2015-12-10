@@ -27,6 +27,8 @@ private:
     void set_acc_scale(int scale);
     void set_mag_scale(int scale);
 
+    void rotate();
+
     float gyro_scale;
     float acc_scale;
     float mag_scale;

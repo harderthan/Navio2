@@ -4,8 +4,8 @@
 
 #include "LSM9DS1.h"
 
-#define DEV_ACC_GYRO "/dev/spidev0.3"
-#define DEV_MAG      "/dev/spidev0.2"
+#define DEVICE_ACC_GYRO "/dev/spidev0.3"
+#define DEVICE_MAGNETOMETER      "/dev/spidev0.2"
 
 #define READ_FLAG     0x80
 #define MULTIPLE_READ 0x40
@@ -42,11 +42,11 @@ void LSM9DS1::ReadRegs(const char *dev, uint8_t ReadAddr, uint8_t *ReadBuf, unsi
     unsigned char rx[255] = {0};
 
     tx[0] = ReadAddr | READ_FLAG;
-    if (dev == DEV_MAG) tx[0] |= MULTIPLE_READ;
+    if (dev == DEVICE_MAGNETOMETER) tx[0] |= MULTIPLE_READ;
 
     SPIdev::transfer(dev, tx, rx, Bytes + 1);
 
-    for (int i=0; i<Bytes; i++)
+    for (int i = 0; i < Bytes; i++)
         ReadBuf[i] = rx[i + 1];
 
     usleep(50);
@@ -61,8 +61,8 @@ returns true if Accel/Gyro and Magnetometer answers
 bool LSM9DS1::probe()
 {
     uint8_t responseXG,responseM;
-    responseXG = ReadReg(DEV_ACC_GYRO, LSM9DS1XG_WHO_AM_I);
-    responseM = ReadReg(DEV_MAG, LSM9DS1M_WHO_AM_I);
+    responseXG = ReadReg(DEVICE_ACC_GYRO, LSM9DS1XG_WHO_AM_I);
+    responseM = ReadReg(DEVICE_MAGNETOMETER, LSM9DS1M_WHO_AM_I);
     if (responseXG == WHO_AM_I_ACC_GYRO && responseM == WHO_AM_I_MAG)
         return true;
     else
@@ -73,31 +73,32 @@ bool LSM9DS1::initialize()
 {
     //--------Accelerometer and Gyroscope---------
     // enable the 3-axes of the gyroscope
-    WriteReg(DEV_ACC_GYRO, LSM9DS1XG_CTRL_REG4, BITS_XEN_G |
+    WriteReg(DEVICE_ACC_GYRO, LSM9DS1XG_CTRL_REG4, BITS_XEN_G |
                                                 BITS_YEN_G |
                                                 BITS_ZEN_G);
     // configure the gyroscope
-    WriteReg(DEV_ACC_GYRO, LSM9DS1XG_CTRL_REG1_G, BITS_ODR_G_952HZ |
+    WriteReg(DEVICE_ACC_GYRO, LSM9DS1XG_CTRL_REG1_G, BITS_ODR_G_952HZ |
                                                   BITS_FS_G_2000DPS);
     usleep(200);
 
     // enable the three axes of the accelerometer
-    WriteReg(DEV_ACC_GYRO, LSM9DS1XG_CTRL_REG5_XL, BITS_XEN_XL |
+    WriteReg(DEVICE_ACC_GYRO, LSM9DS1XG_CTRL_REG5_XL, BITS_XEN_XL |
                                                    BITS_YEN_XL |
                                                    BITS_ZEN_XL);
     // configure the accelerometer-specify bandwidth selection with Abw
-    WriteReg(DEV_ACC_GYRO, LSM9DS1XG_CTRL_REG6_XL, BITS_ODR_XL_952HZ |
+    WriteReg(DEVICE_ACC_GYRO, LSM9DS1XG_CTRL_REG6_XL, BITS_ODR_XL_952HZ |
                                                    BITS_FS_XL_16G);
     usleep(200);
-    //WriteReg(DEV_ACC_GYRO,LSM9DS1XG_CTRL_REG8, 0x44);
+
     //------------Magnetometer----------------
-    WriteReg(DEV_MAG, LSM9DS1M_CTRL_REG1_M, BITS_TEMP_COMP |
+    WriteReg(DEVICE_MAGNETOMETER, LSM9DS1M_CTRL_REG1_M, BITS_TEMP_COMP |
                                             BITS_OM_HIGH |
                                             BITS_ODR_M_80HZ);
-    WriteReg(DEV_MAG, LSM9DS1M_CTRL_REG2_M, BITS_FS_M_16Gs);
-    WriteReg(DEV_MAG, LSM9DS1M_CTRL_REG3_M, BITS_MD_CONTINUOUS); // continuous conversion mode
-    WriteReg(DEV_MAG, LSM9DS1M_CTRL_REG4_M, BITS_OMZ_HIGH);
-    WriteReg(DEV_MAG, LSM9DS1M_CTRL_REG5_M, 0x00 );
+    WriteReg(DEVICE_MAGNETOMETER, LSM9DS1M_CTRL_REG2_M, BITS_FS_M_16Gs);
+    // continuous conversion mode
+    WriteReg(DEVICE_MAGNETOMETER, LSM9DS1M_CTRL_REG3_M, BITS_MD_CONTINUOUS);
+    WriteReg(DEVICE_MAGNETOMETER, LSM9DS1M_CTRL_REG4_M, BITS_OMZ_HIGH);
+    WriteReg(DEVICE_MAGNETOMETER, LSM9DS1M_CTRL_REG5_M, 0x00 );
     usleep(200);
 
     set_gyro_scale(BITS_FS_G_2000DPS);
@@ -115,38 +116,55 @@ void LSM9DS1::update()
     float magBias[3]={0,0,0};
 
     // Read temperature
-    ReadRegs(DEV_ACC_GYRO, LSM9DS1XG_OUT_TEMP_L, &response[0], 2);
+    ReadRegs(DEVICE_ACC_GYRO, LSM9DS1XG_OUT_TEMP_L, &response[0], 2);
     temperature = (float)(((int16_t)response[1] << 8) | response[0]) / 256. + 25.;
 
     // Read accelerometer
-    ReadRegs(DEV_ACC_GYRO, LSM9DS1XG_OUT_X_L_XL, &response[0], 6);
+    ReadRegs(DEVICE_ACC_GYRO, LSM9DS1XG_OUT_X_L_XL, &response[0], 6);
     for (int i=0; i<3; i++) {
         bit_data = ((int16_t)response[2*i+1] << 8) | response[2*i] ;
         accelerometer_data[i] = G_SI * ((float)bit_data * acc_scale + accelBias[i]);
     }
 
     // Read gyroscope
-    ReadRegs(DEV_ACC_GYRO, LSM9DS1XG_OUT_X_L_G, &response[0], 6);
+    ReadRegs(DEVICE_ACC_GYRO, LSM9DS1XG_OUT_X_L_G, &response[0], 6);
     for (int i=0; i<3; i++) {
         bit_data = ((int16_t)response[2*i+1] << 8) | response[2*i] ;
         gyroscope_data[i] = (PI/180) * ((float)bit_data * gyro_scale + gyroBias[i]);
     }
 
     // Read magnetometer
-    ReadRegs(DEV_MAG, LSM9DS1M_OUT_X_L_M, &response[0], 6);
+    ReadRegs(DEVICE_MAGNETOMETER, LSM9DS1M_OUT_X_L_M, &response[0], 6);
     for (int i=0; i<3; i++) {
         bit_data = ((int16_t)response[2*i+1] << 8) | response[2*i] ;
         magnetometer_data[i] = 100.0 * ((float)bit_data * mag_scale + magBias[i]);
     }
 
+    // Change rotation of LSM9DS1 like in MPU-9250
+    rotate();
+}
 
+void LSM9DS1::rotate()
+{
+    float replacement_acc, replacement_gyro;
+
+    replacement_acc = accelerometer_data[0];
+    accelerometer_data[0] = -accelerometer_data[1];
+    accelerometer_data[1] = -replacement_acc;
+
+    replacement_gyro = gyroscope_data[0];
+    gyroscope_data[0] = -gyroscope_data[1];
+    gyroscope_data[1] = -replacement_gyro;
+
+    magnetometer_data[1] = -magnetometer_data[1];
+    magnetometer_data[2] = -magnetometer_data[2];
 }
 
 void LSM9DS1::set_gyro_scale(int scale)
 {
     uint8_t reg;
-    reg = BITS_FS_G_MASK & ReadReg(DEV_ACC_GYRO, LSM9DS1XG_CTRL_REG1_G);
-    WriteReg(DEV_ACC_GYRO, LSM9DS1XG_CTRL_REG1_G,reg | scale);
+    reg = BITS_FS_G_MASK & ReadReg(DEVICE_ACC_GYRO, LSM9DS1XG_CTRL_REG1_G);
+    WriteReg(DEVICE_ACC_GYRO, LSM9DS1XG_CTRL_REG1_G,reg | scale);
     switch (scale) {
     case BITS_FS_G_245DPS:
         gyro_scale = 0.00875;
@@ -163,8 +181,8 @@ void LSM9DS1::set_gyro_scale(int scale)
 void LSM9DS1::set_acc_scale(int scale)
 {
     uint8_t reg;
-    reg = BITS_FS_XL_MASK & ReadReg(DEV_ACC_GYRO, LSM9DS1XG_CTRL_REG6_XL);
-    WriteReg(DEV_ACC_GYRO, LSM9DS1XG_CTRL_REG6_XL, reg | scale);
+    reg = BITS_FS_XL_MASK & ReadReg(DEVICE_ACC_GYRO, LSM9DS1XG_CTRL_REG6_XL);
+    WriteReg(DEVICE_ACC_GYRO, LSM9DS1XG_CTRL_REG6_XL, reg | scale);
     switch (scale) {
     case BITS_FS_XL_2G:
         acc_scale = 0.000061;
@@ -184,8 +202,8 @@ void LSM9DS1::set_acc_scale(int scale)
 void LSM9DS1::set_mag_scale(int scale)
 {
     uint8_t reg;
-    reg = BITS_FS_M_MASK & ReadReg(DEV_MAG, LSM9DS1M_CTRL_REG2_M);
-    WriteReg(DEV_MAG, LSM9DS1M_CTRL_REG2_M, reg | scale);
+    reg = BITS_FS_M_MASK & ReadReg(DEVICE_MAGNETOMETER, LSM9DS1M_CTRL_REG2_M);
+    WriteReg(DEVICE_MAGNETOMETER, LSM9DS1M_CTRL_REG2_M, reg | scale);
     switch (scale) {
     case BITS_FS_M_4Gs:
         mag_scale = 0.00014;
