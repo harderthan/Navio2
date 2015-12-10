@@ -295,8 +295,7 @@ void MPU9250::calib_mag()
 void MPU9250::update()
 {
     uint8_t response[21];
-    int16_t bit_data;
-    float data;
+    int16_t bit_data[3];
     int i;
 
     //Send I2C command at first
@@ -309,27 +308,29 @@ void MPU9250::update()
 
     //Get accelerometer value
     for(i=0; i<3; i++) {
-        bit_data = ((int16_t)response[i*2] << 8) | response[i*2+1];
-        data = (float)bit_data;
-        accelerometer_data[i] = G_SI * data / acc_divider;
+        bit_data[i] = ((int16_t)response[i*2] << 8) | response[i*2+1];
     }
+    _ax = G_SI * bit_data[0] / acc_divider;
+    _ay = G_SI * bit_data[1] / acc_divider;
+    _az = G_SI * bit_data[2] / acc_divider;
 
     //Get temperature
-    bit_data = ((int16_t)response[i*2] << 8) | response[i*2+1];
-    data = (float)bit_data;
-    temperature = ((data - 21) / 333.87) + 21;
+    bit_data[0] = ((int16_t)response[i*2] << 8) | response[i*2+1];
+    temperature = ((bit_data[0] - 21) / 333.87) + 21;
 
     //Get gyroscope value
     for(i=4; i<7; i++) {
-        bit_data = ((int16_t)response[i*2] << 8) | response[i*2+1];
-        data = (float)bit_data;
-        gyroscope_data[i-4] = (PI/180) * data / gyro_divider;
+        bit_data[i-4] = ((int16_t)response[i*2] << 8) | response[i*2+1];
     }
+    _gx = (PI / 180) * bit_data[0] / gyro_divider;
+    _gy = (PI / 180) * bit_data[1] / gyro_divider;
+    _gz = (PI / 180) * bit_data[2] / gyro_divider;
 
     //Get Magnetometer value
     for(i=7; i<10; i++) {
-        bit_data = ((int16_t)response[i*2+1] << 8) | response[i*2];
-        data = (float)bit_data;
-        magnetometer_data[i-7] = data * magnetometer_ASA[i-7];
+        bit_data[i-7] = ((int16_t)response[i*2+1] << 8) | response[i*2];
     }
+    _mx = bit_data[0] * magnetometer_ASA[0];
+    _my = bit_data[1] * magnetometer_ASA[1];
+    _mz = bit_data[2] * magnetometer_ASA[2];
 }
