@@ -165,7 +165,21 @@ void imuLoop()
     // Accel + gyro + mag.
     // Soft and hard iron calibration required for proper function.
     /*
-    imu->getMotion9(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz);
+    imu->update();
+    imu->read_accelerometer(acc);
+    imu->read_gyroscope(gyro);
+    imu->read_magnetometer(mag);
+
+    ax = acc[0] / G_SI;
+    ay = acc[1] / G_SI;
+    az = acc[2] / G_SI;
+    gx = gyro[0] * 180 / PI;
+    gy = gyro[1] * 180 / PI;
+    gz = gyro[2] * 180 / PI;
+    mx = mag[0];
+    my = mag[1];
+    mz = mag[2];
+
     ahrs.update(ax, ay, az, gx*0.0175, gy*0.0175, gz*0.0175, my, mx, -mz, dt);
     */
 
