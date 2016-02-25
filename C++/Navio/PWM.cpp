@@ -58,7 +58,7 @@ bool PWM::set_duty_cycle(unsigned int channel, float period)
     int period_ns;
     char path[60] = "/sys/class/pwm/pwmchip0";
     char path_ch[20];
-    sprintf(path_ch, "/pwm%u/duty_cycle", channel);
+    sprintf(path_ch, "/pwm%u/duty_cycle", channel);  // sprintf: 1파라미터인 buffer에 "문자"를 집어넣는다. %u에 channel
     strcat(path, path_ch);
 
     period_ns = period * 1e6;
